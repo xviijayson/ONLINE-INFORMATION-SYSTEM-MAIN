@@ -1,0 +1,6 @@
+Type,Requester,Barangay,Purpose/Occasion,Amount,Status,Date Filed,Encoder,Notes,Contact,Event Date
+Cake Request,Juan Dela Cruz,Bagumbayan,Birthday Party,2500,Completed,2026-04-15,Encoder1,Delivered on schedule,09123456789,2026-04-20
+Cake Request,Maria Garcia,Poblacion,Wedding Reception,5000,Pending,2026-04-22,Encoder2,Awaiting confirmation,09234567890,2026-05-10
+Cake Request,Jose Santos,Libis,Barangay Fiesta,3000,In Progress,2026-04-28,Encoder1,Cake design in progress,09345678901,2026-05-15
+Medical Assistance,Rosa Mercado,Bagumbayan,Emergency Medical,8000,Completed,2026-04-10,Encoder3,Hospitalization bill covered,09456789012,2026-04-12
+Tuition Assistance,Carlos Miguel,Poblacion,School Enrollment,4500,Pending,2026-05-01,Encoder2,Documentation submitted,09567890123,2026-05-08

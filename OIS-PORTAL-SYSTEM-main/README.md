@@ -100,6 +100,19 @@ npx serve .
 ```
 Then visit: `http://localhost:8080`
 
+### Step 8 - Deploy to Vercel
+This project is configured for Vercel as a static site.
+
+Use these Vercel settings:
+- Framework Preset: `Other`
+- Build Command: `npm run build`
+- Output Directory: `dist`
+- Install Command: default
+
+The `npm run build` command copies the HTML, CSS, JS, images, and data files into `dist/`, and Vercel serves `dist/index.html` as the homepage.
+
+If you use Vercel drag-and-drop instead of Git import, upload the contents of `dist/` directly. Do not upload a parent folder that contains the project folder, because Vercel needs `index.html` at the deployed root.
+
 ---
 
 ## ✅ Features Summary

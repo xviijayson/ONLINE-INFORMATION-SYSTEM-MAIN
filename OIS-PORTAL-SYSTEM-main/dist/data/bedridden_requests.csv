@@ -1,0 +1,5 @@
+Patient,Claimant,Barangay,Address,Contact,Category,Status,Date Filed,Date Given,Delivered By,Notes
+Juan Dela Cruz,Maria Dela Cruz,Bagumbayan,123 Sampaguita St.,09123456789,Wheelchair,Done,2026-03-10,2026-03-15,Staff1,Good condition
+Rosa Mercado,Rosa Mercado,Poblacion,456 Mabuhay Ave.,09234567890,BP Monitor (Digital),Pending,2026-04-20,,Encoder2,Awaiting donor
+Jose Reyes,Ana Reyes,Libis,789 Hope Lane,09345678901,Tungkod/Cane,In Progress,2026-04-25,,Encoder1,Item being prepared
+Carmen Laveda,Carmen Laveda,Bagumbayan,321 Sunrise Blvd.,09456789012,Nebulizer,Done,2026-04-01,2026-04-05,Staff2,Unit functions properly

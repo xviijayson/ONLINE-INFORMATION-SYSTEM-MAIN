@@ -1,0 +1,1007 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Client Record Search — OIS Portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:          #f0faf4;
+      --card:        #ffffff;
+      --border:      #c6e8d4;
+      --accent:      #16a34a;
+      --accent2:     #15803d;
+      --green-light: #dcfce7;
+      --text:        #14432a;
+      --muted:       #4d7c5f;
+      --red:         #dc2626;
+      --shadow:      0 2px 8px rgba(20,67,42,.09);
+      --shadow-lg:   0 8px 32px rgba(20,67,42,.13);
+      --heading-font:'DM Sans', sans-serif;
+    }
+    *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+    html { font-size:16px; }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex; flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    /* ===== HEADER ===== */
+    .site-header {
+      background: linear-gradient(135deg,#16a34a,#15803d);
+      padding: 1.2rem 2rem;
+      display: flex; align-items: center; gap: 1rem;
+      box-shadow: 0 2px 12px rgba(22,163,74,.25);
+    }
+    .logo-box {
+      width:44px; height:44px; background:rgba(255,255,255,.2);
+      border-radius:12px; display:grid; place-items:center;
+      font-size:1.4rem; flex-shrink:0;
+    }
+    .header-text h1 {
+      font-family:var(--heading-font); font-size:1.05rem;
+      font-weight:700; color:#fff; line-height:1.15;
+    }
+    .header-text p { font-size:.78rem; color:rgba(255,255,255,.8); margin-top:.1rem; }
+    .header-badge {
+      margin-left:auto;
+      background:rgba(255,255,255,.18); color:#fff;
+      font-size:.72rem; font-weight:600; padding:.3rem .8rem;
+      border-radius:20px; border:1px solid rgba(255,255,255,.3);
+    }
+
+    /* ===== MAIN ===== */
+    .main-wrap {
+      flex:1; max-width:760px; width:100%;
+      margin:0 auto; padding:2.5rem 1.5rem 3rem;
+    }
+
+    /* ===== SEARCH SECTION ===== */
+    .search-section {
+      position:relative;
+      overflow:hidden;
+      text-align:center;
+      margin-bottom:2rem;
+      padding:2.25rem 1.5rem;
+      border:1px solid rgba(22,163,74,.12);
+      border-radius:28px;
+      background:rgba(255,255,255,.78);
+      box-shadow:0 20px 60px rgba(20,67,42,.08);
+      isolation:isolate;
+    }
+    .search-section::before {
+      content:"";
+      position:absolute;
+      inset:0;
+      background:
+        linear-gradient(rgba(255,255,255,.9), rgba(255,255,255,.9)),
+        url("logo.png") center/320px no-repeat;
+      opacity:.28;
+      pointer-events:none;
+      z-index:-1;
+    }
+    .search-icon { font-size:3.2rem; display:block; margin-bottom:.7rem; }
+    .search-section h2 {
+      font-family:var(--heading-font); font-size:1.45rem; font-weight:700;
+      color:var(--text); margin-bottom:.4rem; line-height:1.15;
+    }
+    .search-section > p { color:var(--muted); font-size:.93rem; margin-bottom:1.6rem; }
+
+    .search-box-wrap {
+      display:flex; gap:.7rem;
+      max-width:580px; margin:0 auto;
+    }
+    .search-input-group {
+      flex:1; display:flex; align-items:center; gap:.7rem;
+      background:var(--card); border:2px solid var(--border);
+      border-radius:12px; padding:.75rem 1.1rem;
+      box-shadow:var(--shadow);
+      transition:border .2s, box-shadow .2s;
+    }
+    .search-input-group:focus-within {
+      border-color:var(--accent);
+      box-shadow:0 0 0 4px rgba(22,163,74,.12);
+    }
+    .search-input-group .s-icon { color:var(--muted); font-size:1.1rem; flex-shrink:0; }
+    .search-input-group input {
+      border:none; background:none; outline:none;
+      font-family:'DM Sans',sans-serif; font-size:.97rem;
+      color:var(--text); width:100%;
+    }
+    .search-input-group input::placeholder { color:#a7c4b5; }
+    .btn-search {
+      background:linear-gradient(135deg,#16a34a,#15803d);
+      color:#fff; border:none; border-radius:12px;
+      padding:.75rem 1.5rem;
+      font-family:var(--heading-font); font-size:.92rem; font-weight:700;
+      cursor:pointer; white-space:nowrap;
+      box-shadow:0 3px 10px rgba(22,163,74,.3);
+      transition:opacity .2s, transform .15s;
+    }
+    .btn-search:hover { opacity:.9; transform:translateY(-1px); }
+    .search-hint { font-size:.78rem; color:var(--muted); margin-top:.7rem; }
+
+    /* ===== STATES ===== */
+    .result-area { margin-top:1.5rem; }
+
+    .loading-state { display:none; position:relative; min-height:300px; }
+    .loading-state .loader-area {
+      position:relative; overflow:hidden; border-radius:28px;
+      background:rgba(255,255,255,.85); border:1px solid rgba(22,163,74,.12);
+      padding:2rem; box-shadow:0 24px 80px rgba(20,67,42,.12);
+      display:flex; align-items:center; justify-content:center;
+    }
+    .loading-state .loader-area::before {
+      content:'';
+      position:absolute; inset:0;
+      background:linear-gradient(180deg, rgba(240,250,244,.95) 0%, rgba(255,255,255,.8) 100%);
+      pointer-events:none;
+    }
+    .loading-state .loader-area .orb { position:absolute; border-radius:50%; filter:blur(90px); opacity:.22; pointer-events:none; }
+    .loading-state .loader-area .orb1 { width:500px; height:500px; background:#86efac; top:-160px; left:-160px; }
+    .loading-state .loader-area .orb2 { width:400px; height:400px; background:#bbf7d0; bottom:-110px; right:-110px; }
+    .loader-card {
+      position:relative; z-index:2; width:100%; max-width:420px;
+      background:#ffffff; border:1px solid var(--border);
+      border-radius:24px; padding:2rem 2.2rem;
+      box-shadow:0 18px 50px rgba(20,67,42,.14);
+    }
+    .loader-card .login-badge { display:flex; align-items:center; gap:.7rem; margin-bottom:1.4rem; }
+    .loader-card .login-badge .icon {
+      width:52px; height:52px; border-radius:50%; overflow:hidden;
+      display:grid; place-items:center; background:#fff;
+      box-shadow:0 2px 8px rgba(22,163,74,.2);
+    }
+    .loader-card .login-badge .sys-name {
+      font-family:var(--heading-font); font-weight:700; font-size:1rem;
+      color:var(--text); line-height:1.25;
+    }
+    .loader-card .login-badge .sys-name span {
+      display:block; font-size:.7rem; font-weight:400;
+      color:var(--muted); font-family:'DM Sans',sans-serif;
+    }
+    .loader-title { font-family:var(--heading-font); font-size:1.2rem; font-weight:700; margin:0 0 .45rem; color:var(--text); line-height:1.2; }
+    .loader-sub { color:var(--muted); font-size:.95rem; margin-bottom:1.25rem; }
+    .spinner {
+      width:38px; height:38px;
+      border:3.5px solid var(--green-light);
+      border-top-color:var(--accent);
+      border-radius:50%;
+      animation:spin .7s linear infinite;
+      margin:0 auto .9rem;
+    }
+    @keyframes spin { to{ transform:rotate(360deg); } }
+    .loading-state p { color:var(--muted); font-size:.9rem; }
+
+    .startup-loader {
+      position:fixed;
+      inset:0;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      background:linear-gradient(135deg,#0d3321 0%,#1a6640 55%,#2d9e6b 100%);
+      z-index:9999;
+      transition:opacity .6s ease, visibility .6s ease;
+    }
+    .startup-loader.hidden { opacity:0; visibility:hidden; pointer-events:none; }
+    .startup-loader.gone { display:none; }
+    .splash-logo {
+      width:112px;
+      height:112px;
+      border-radius:50%;
+      object-fit:cover;
+      border:4px solid rgba(255,255,255,.25);
+      box-shadow:0 0 0 14px rgba(201,162,39,.15), 0 0 0 28px rgba(201,162,39,.06);
+      animation:splashPulse 2s ease-in-out infinite;
+      margin-bottom:24px;
+    }
+    @keyframes splashPulse {
+      0%,100% { box-shadow:0 0 0 14px rgba(201,162,39,.15), 0 0 0 28px rgba(201,162,39,.06); }
+      50% { box-shadow:0 0 0 20px rgba(201,162,39,.22), 0 0 0 40px rgba(201,162,39,.05); }
+    }
+    .splash-title { margin:0 0 .25rem; font-family:var(--heading-font); font-size:1.7rem; font-weight:700; color:#fff; letter-spacing:0; line-height:1.15; text-align:center; }
+    .splash-name { color:#e8bb3e; font-size:.92rem; letter-spacing:.16em; text-transform:uppercase; text-align:center; margin-bottom:.4rem; }
+    .splash-sub { font-size:.72rem; color:rgba(255,255,255,.42); letter-spacing:.26em; text-transform:uppercase; margin-bottom:2rem; text-align:center; }
+    .splash-bar-wrap { width:220px; height:3px; background:rgba(255,255,255,.12); border-radius:999px; overflow:hidden; }
+    .splash-bar { height:100%; width:100%; background:#c9a227; border-radius:999px; transform-origin:left center; animation:loadBar 1s ease forwards; }
+    .splash-status { margin-top:.9rem; color:rgba(255,255,255,.58); font-size:.76rem; letter-spacing:.12em; text-transform:uppercase; }
+
+    .not-found-state { text-align:center; padding:3rem; display:none; }
+    .not-found-state .nf-icon { font-size:3.2rem; margin-bottom:.8rem; }
+    .not-found-state h3 {
+      font-family:var(--heading-font); font-size:1.05rem; font-weight:700;
+      color:var(--text); margin-bottom:.5rem;
+    }
+    .not-found-state p { color:var(--muted); font-size:.88rem; line-height:1.7; }
+
+    /* ===== MULTI RESULTS ===== */
+    .multi-results { display:none; }
+    .multi-results h3 {
+      font-family:var(--heading-font); font-size:.95rem; font-weight:700;
+      color:var(--text); margin-bottom:.9rem;
+    }
+    .result-list { display:flex; flex-direction:column; gap:.6rem; }
+    .result-item {
+      background:var(--card); border:1.5px solid var(--border);
+      border-radius:12px; padding:1rem 1.2rem;
+      display:flex; align-items:center; gap:.9rem;
+      cursor:pointer;
+      transition:border-color .18s, box-shadow .18s, background .18s;
+      box-shadow:var(--shadow);
+    }
+    .result-item:hover {
+      border-color:var(--accent);
+      box-shadow:0 4px 16px rgba(22,163,74,.15);
+      background:#f0fdf4;
+    }
+    .ri-avatar {
+      width:42px; height:42px;
+      background:linear-gradient(135deg,#16a34a,#15803d);
+      border-radius:50%; display:grid; place-items:center;
+      font-size:1rem; font-weight:800; color:#fff; flex-shrink:0;
+    }
+    .ri-info { flex:1; min-width:0; }
+    .ri-name {
+      font-weight:700; font-size:.95rem; color:var(--text);
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    }
+    .ri-meta {
+      font-size:.76rem; color:var(--muted); margin-top:.18rem;
+      display:flex; gap:.4rem; align-items:center; flex-wrap:wrap;
+    }
+    .ri-arrow { color:var(--muted); font-size:1.2rem; }
+
+    /* ===== CLIENT CARD ===== */
+    .client-card {
+      background:var(--card); border:1.5px solid var(--border);
+      border-radius:18px; box-shadow:var(--shadow-lg);
+      overflow:hidden; display:none;
+      animation:fadeUp .3s ease;
+    }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
+
+    .card-header {
+      background:linear-gradient(135deg,#f0fdf4,#dcfce7);
+      padding:1.6rem 1.8rem;
+      display:flex; align-items:center; gap:1.2rem;
+      border-bottom:1.5px solid var(--border);
+    }
+    .c-avatar {
+      width:62px; height:62px;
+      background:linear-gradient(135deg,#16a34a,#15803d);
+      border-radius:50%; display:grid; place-items:center;
+      font-size:1.6rem; font-weight:800; color:#fff;
+      flex-shrink:0; box-shadow:0 4px 14px rgba(22,163,74,.3);
+    }
+    .c-name-area { flex:1; min-width:0; }
+    .c-name-area h3 {
+      font-family:var(--heading-font); font-size:1.15rem; font-weight:700; line-height:1.2;
+      color:var(--text); line-height:1.2;
+    }
+    .c-badges {
+      display:flex; gap:.4rem; flex-wrap:wrap; margin-top:.4rem; align-items:center;
+    }
+
+    .badge {
+      display:inline-block; padding:.22rem .65rem;
+      border-radius:20px; font-size:.72rem; font-weight:700;
+    }
+    .b-id       { background:#dcfce7; color:#15803d; border:1px solid #bbf7d0; }
+    .b-burial   { background:#fee2e2; color:#dc2626; border:1px solid #fecaca; }
+    .b-medical  { background:#dbeafe; color:#1d4ed8; border:1px solid #bfdbfe; }
+    .b-edu      { background:#ede9fe; color:#6d28d9; border:1px solid #ddd6fe; }
+    .b-calamity { background:#fff7ed; color:#c2410c; border:1px solid #fed7aa; }
+    .b-solicitation { background:#ecfeff; color:#0e7490; border:1px solid #a5f3fc; }
+    .b-claimed  { background:#dcfce7; color:#15803d; border:1px solid #bbf7d0; }
+    .b-not      { background:#fee2e2; color:#dc2626; border:1px solid #fecaca; }
+    .b-process  { background:#fef3c7; color:#b45309; border:1px solid #fde68a; }
+    .b-dup      { background:#ede9fe; color:#6d28d9; border:1px solid #ddd6fe; }
+
+    /* ===== UNIFIED SEARCH RESULTS ===== */
+    .unified-results { display:none; animation:fadeUp .3s ease; }
+    .unified-header {
+      background:linear-gradient(135deg,#f0fdf4,#dcfce7);
+      padding:1.4rem 1.6rem;
+      border-radius:16px 16px 0 0;
+      border-bottom:2px solid var(--border);
+    }
+    .unified-summary {
+      display:flex; gap:1.2rem; align-items:center; flex-wrap:wrap;
+      margin-bottom:.8rem;
+    }
+    .summary-badge {
+      display:inline-flex; align-items:center; gap:.3rem;
+      padding:.35rem .75rem; border-radius:16px;
+      font-size:.78rem; font-weight:600;
+      background:rgba(255,255,255,.6); color:var(--text);
+    }
+    .summary-badge.cas { background:rgba(124,58,237,.1); color:#7c3aed; }
+    .summary-badge.bedridden { background:rgba(13,148,136,.1); color:#0d9488; }
+    .summary-badge.device { background:rgba(14,165,233,.1); color:#0ea5e9; }
+    .summary-badge.medicine { background:rgba(245,158,11,.1); color:#f59e0b; }
+    .unified-query {
+      font-family:var(--heading-font); font-size:.95rem; font-weight:700;
+      color:var(--text);
+    }
+    .unified-table-wrap {
+      background:var(--card); overflow-x:auto; border-radius:0 0 16px 16px;
+      border:1.5px solid var(--border); border-top:none;
+    }
+    .unified-table {
+      width:100%; border-collapse:collapse; font-size:.85rem;
+    }
+    .unified-table thead {
+      background:#fafafa; border-bottom:2px solid var(--border);
+      position:sticky; top:0; z-index:10;
+    }
+    .unified-table th {
+      padding:.75rem .85rem; text-align:left;
+      font-weight:700; color:var(--muted);
+      text-transform:uppercase; letter-spacing:.05em;
+      font-size:.72rem; white-space:nowrap;
+    }
+    .unified-table td {
+      padding:.75rem .85rem; border-bottom:1px solid #f0f0f0;
+      color:var(--text);
+    }
+    .unified-table tbody tr:hover {
+      background:#f9fdf7;
+    }
+    .system-pill {
+      display:inline-block; padding:.25rem .5rem;
+      border-radius:8px; font-weight:600; font-size:.7rem;
+      text-transform:uppercase; letter-spacing:.04em;
+    }
+    .system-pill.cas { background:#ede9fe; color:#7c3aed; }
+    .system-pill.bedridden { background:#ccfbf1; color:#0d9488; }
+    .system-pill.device { background:#cffafe; color:#0ea5e9; }
+    .system-pill.medicine { background:#fed7aa; color:#c2410c; }
+    .status-pill {
+      display:inline-block; padding:.28rem .65rem;
+      border-radius:10px; font-weight:600; font-size:.7rem;
+      text-align:center;
+    }
+    .status-done { background:#dcfce7; color:#15803d; }
+    .status-completed { background:#dcfce7; color:#15803d; }
+    .status-released { background:#dcfce7; color:#15803d; }
+    .status-pending { background:#fef3c7; color:#b45309; }
+    .status-in-progress { background:#dbeafe; color:#1d4ed8; }
+    .status-default { background:#f3f4f6; color:#6b7280; }
+    .name-col { font-weight:600; color:var(--accent2); }
+    .date-col { font-size:.8rem; color:var(--muted); white-space:nowrap; }
+    .notes-col {
+      font-size:.8rem; color:var(--muted); max-width:200px;
+      overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+    }
+    .barangay-col { font-size:.8rem; }
+    .unified-actions {
+      display:flex; gap:.6rem; padding:1.2rem 1.6rem;
+      border-top:1px solid var(--border); background:#f9fdf7;
+      border-radius:0 0 16px 16px;
+    }
+    .unified-actions button {
+      padding:.5rem 1rem; border:1.5px solid var(--border);
+      border-radius:8px; background:var(--card); color:var(--text);
+      font-family:'DM Sans',sans-serif; font-size:.85rem; font-weight:600;
+      cursor:pointer; transition:all .2s;
+    }
+    .unified-actions button:hover {
+      background:var(--green-light); border-color:var(--accent);
+    }
+    .export-btn {
+      margin-left:auto;
+      background:linear-gradient(135deg,#16a34a,#15803d) !important;
+      color:#fff !important; border:none !important;
+    }
+    .export-btn:hover {
+      opacity:.9 !important;
+    }
+
+    .card-body { padding:1.5rem 1.8rem; }
+
+    .sec-title {
+      font-size:.7rem; font-weight:700; text-transform:uppercase;
+      letter-spacing:.1em; color:var(--accent2);
+      margin:1.4rem 0 .9rem;
+      display:flex; align-items:center; gap:.5rem;
+    }
+    .sec-title:first-child { margin-top:0; }
+    .sec-title::after {
+      content:""; flex:1; height:1px; background:var(--border);
+    }
+
+    .info-grid {
+      display:grid;
+      grid-template-columns:repeat(auto-fill,minmax(190px,1fr));
+      gap:.8rem 1.4rem;
+    }
+    .info-item { display:flex; flex-direction:column; gap:.18rem; }
+    .info-label {
+      font-size:.68rem; font-weight:700; text-transform:uppercase;
+      letter-spacing:.06em; color:var(--muted);
+    }
+    .info-value { font-size:.92rem; font-weight:500; color:var(--text); }
+
+    .card-footer {
+      background:#f0fdf4; border-top:1px solid var(--border);
+      padding:.9rem 1.8rem;
+      display:flex; align-items:center; gap:.8rem; flex-wrap:wrap;
+    }
+    .footer-note { font-size:.77rem; color:var(--muted); flex:1; }
+
+    .btn-back {
+      background:var(--green-light); color:var(--accent2);
+      border:1.5px solid rgba(22,163,74,.3); border-radius:9px;
+      padding:.45rem .9rem;
+      font-family:'DM Sans',sans-serif; font-size:.82rem; font-weight:600;
+      cursor:pointer; transition:background .18s;
+      display:inline-flex; align-items:center; gap:.3rem;
+    }
+    .btn-back:hover { background:#bbf7d0; }
+
+    /* ===== FOOTER ===== */
+    .site-footer {
+      text-align:center; padding:1.3rem;
+      font-size:.77rem; color:var(--muted);
+      border-top:1px solid var(--border); background:var(--card);
+    }
+
+    /* ===== RESPONSIVE ===== */
+    @media(max-width:520px) {
+      .search-box-wrap { flex-direction:column; }
+      .btn-search { width:100%; }
+      .card-header { flex-direction:column; text-align:center; }
+      .c-badges { justify-content:center; }
+      .info-grid { grid-template-columns:1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="startup-loader" id="startupLoader">
+    <img class="splash-logo" src="logo.png" alt="Logo" />
+    <h3 class="splash-title">Client Record Search</h3>
+    <div class="splash-name">Congressman Gerald Galang</div>
+    <p class="splash-sub">Official Dashboard Startup</p>
+    <div class="splash-bar-wrap"><div class="splash-bar"></div></div>
+    <div class="splash-status">Loading lookup modules...</div>
+  </div>
+
+  <!-- HEADER -->
+  <header class="site-header">
+    <div class="logo-box"><img src="logo.png" alt="Logo" style="width:40px;height:40px;object-fit:cover;border-radius:50%"/></div>
+    <div class="header-text">
+      <h1>OIS Portal</h1>
+      <p>Office Information System</p>
+    </div>
+    <span class="header-badge">Client Lookup</span>
+  </header>
+
+  <!-- MAIN -->
+  <main class="main-wrap">
+
+    <!-- Search -->
+    <div class="search-section">
+      <span class="search-icon">🔎</span>
+      <h2>Check Your Record</h2>
+      <p>Enter your name or Client ID to view your encoded information.</p>
+
+      <div class="search-box-wrap">
+        <div class="search-input-group">
+          <span class="s-icon">🔍</span>
+          <input
+            type="text" id="searchInput"
+            placeholder="e.g. Dela Cruz Juan  or  2026040001"
+            autocomplete="off"
+            onkeydown="if(event.key==='Enter') doSearch()"
+          />
+        </div>
+        <button class="btn-search" onclick="doSearch()">Search</button>
+      </div>
+      <p class="search-hint">You can search by: Last Name, First Name, Full Name, or Client ID</p>
+    </div>
+
+    <!-- Results -->
+    <div class="result-area">
+
+      <!-- Loading -->
+      <div class="loading-state" id="loadingState">
+        <div class="loader-area">
+          <div class="orb orb1"></div>
+          <div class="orb orb2"></div>
+          <div class="loader-card">
+            <div class="login-badge">
+              <div class="icon"><img src="logo.png" alt="Logo" style="width:48px;height:48px;object-fit:cover;border-radius:50%"/></div>
+              <div class="sys-name">OIS Portal<span>Office Information System</span></div>
+            </div>
+            <h3 class="loader-title">Preparing your search</h3>
+            <p class="loader-sub">Please wait while we load the latest client records.</p>
+            <div class="spinner"></div>
+            <p>Searching records…</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Not Found -->
+      <div class="not-found-state" id="notFoundState">
+        <div class="nf-icon">📭</div>
+        <h3>No Record Found</h3>
+        <p>
+          We couldn't find any client matching "<strong id="notFoundQuery"></strong>".<br/>
+          Please check your spelling, or contact the office if you believe your information has been encoded.
+        </p>
+      </div>
+
+      <!-- Multiple Results -->
+      <div class="multi-results" id="multiResults">
+        <h3 id="multiTitle"></h3>
+        <div class="result-list" id="resultList"></div>
+        <button class="btn-back" style="margin-top:1rem" onclick="resetView()">← Back to Search</button>
+      </div>
+
+      <!-- Unified Search Results -->
+      <div class="unified-results" id="unifiedResults">
+        <div class="unified-header">
+          <div class="unified-summary">
+            <span class="unified-query" id="unifiedQuery"></span>
+            <span class="summary-badge" id="totalBadge">0 records</span>
+            <span class="summary-badge cas" id="casBadge" style="display:none">CAS: 0</span>
+            <span class="summary-badge bedridden" id="bedriddenBadge" style="display:none">Bedridden: 0</span>
+            <span class="summary-badge device" id="deviceBadge" style="display:none">Device: 0</span>
+            <span class="summary-badge medicine" id="medicineBadge" style="display:none">Medicine: 0</span>
+          </div>
+        </div>
+
+        <div class="unified-table-wrap">
+          <table class="unified-table">
+            <thead>
+              <tr>
+                <th>System</th>
+                <th>Date</th>
+                <th>Name / Patient</th>
+                <th>Record / Request</th>
+                <th>Category / Purpose</th>
+                <th>Barangay</th>
+                <th>Status</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody id="unifiedTableBody">
+            </tbody>
+          </table>
+        </div>
+
+        <div class="unified-actions">
+          <button onclick="window.exportUnifiedResults()">📥 Export to Excel</button>
+          <button class="btn-back" onclick="resetView()">← Search Again</button>
+        </div>
+      </div>
+
+      <!-- Single Client Card -->
+      <div class="client-card" id="clientCard">
+        <div class="card-header">
+          <div class="c-avatar" id="cardAvatar">?</div>
+          <div class="c-name-area">
+            <h3 id="cardName">—</h3>
+            <div class="c-badges">
+              <span class="badge b-id" id="cardIdBadge"></span>
+              <span class="badge" id="cardAssistBadge" style="display:none"></span>
+              <span class="badge" id="cardStatusBadge"></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-body">
+
+          <div class="sec-title">📍 Address &amp; Contact</div>
+          <div class="info-grid">
+            <div class="info-item"><span class="info-label">Barangay</span><span class="info-value" id="cardBarangay">—</span></div>
+            <div class="info-item"><span class="info-label">Street</span><span class="info-value" id="cardStreet">—</span></div>
+            <div class="info-item"><span class="info-label">Contact No.</span><span class="info-value" id="cardContact">—</span></div>
+          </div>
+
+          <div class="sec-title">👤 Personal Information</div>
+          <div class="info-grid">
+            <div class="info-item"><span class="info-label">Birthdate</span><span class="info-value" id="cardBirthdate">—</span></div>
+            <div class="info-item"><span class="info-label">Age</span><span class="info-value" id="cardAge">—</span></div>
+            <div class="info-item"><span class="info-label">Sex</span><span class="info-value" id="cardSex">—</span></div>
+            <div class="info-item"><span class="info-label">Civil Status</span><span class="info-value" id="cardCivil">—</span></div>
+            <div class="info-item"><span class="info-label">No. of Family Members</span><span class="info-value" id="cardFamily">—</span></div>
+            <div class="info-item"><span class="info-label">Occupation</span><span class="info-value" id="cardOccupation">—</span></div>
+            <div class="info-item"><span class="info-label">Monthly Salary</span><span class="info-value" id="cardSalary">—</span></div>
+          </div>
+
+          <div class="sec-title">📋 Assistance Details</div>
+          <div class="info-grid">
+            <div class="info-item"><span class="info-label">Type of Assistance</span><span class="info-value" id="cardAssistance">—</span></div>
+            <div class="info-item"><span class="info-label">Assistance Status</span><span class="info-value" id="cardStatus">—</span></div>
+            <div class="info-item" id="cardClaimedDateItem" style="display:none"><span class="info-label">📅 Date Claimed</span><span class="info-value" id="cardClaimedDate" style="color:#15803d;font-weight:600">—</span></div>
+          </div>
+
+        </div>
+
+        <div class="card-footer">
+          <span class="footer-note">ℹ️ If any information is incorrect, please contact the office to request an update.</span>
+          <button class="btn-back" onclick="resetView()">← Search Again</button>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="site-footer">
+    OIS Portal — Office Information System &nbsp;|&nbsp; Client Record Lookup &nbsp;|&nbsp; 2026
+  </footer>
+
+<!-- Load unified search module first -->
+<script src="js/unified-search.js"></script>
+
+<script type="module">
+import { initializeApp }   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+// Keep config inline here
+const firebaseConfig = {
+  apiKey: "AIzaSyCR7xXSuRnvdhR3QWT_9KZJPdMCenJHQo0",
+  authDomain: "ois-portal-55bc5.firebaseapp.com",
+  projectId: "ois-portal-55bc5",
+  storageBucket: "ois-portal-55bc5.firebasestorage.app",
+  messagingSenderId: "1021378935395",
+  appId: "1:1021378935395:web:ad32a7e78a10a92e609656"
+};
+
+const app = initializeApp(firebaseConfig);
+const db  = getFirestore(app);
+let allClients = [];
+const startupLoader = document.getElementById("startupLoader");
+const startupStartTime = performance.now();
+
+const hideStartupLoader = () => {
+  if (!startupLoader) return;
+  startupLoader.classList.add("hidden");
+};
+
+const scheduleHideStartupLoader = () => {
+  const elapsed = performance.now() - startupStartTime;
+  const delay = Math.max(0, 1200 - elapsed);
+  setTimeout(hideStartupLoader, delay);
+};
+
+startupLoader?.addEventListener("transitionend", () => {
+  if (startupLoader.classList.contains("hidden")) {
+    startupLoader.classList.add("gone");
+  }
+});
+
+// Pre-load on page open for instant search
+(async () => {
+  try {
+    const snap = await getDocs(collection(db, "clients"));
+    allClients  = snap.docs.map(d => ({ firestoreId: d.id, ...d.data() }));
+    
+    // Also load unified search databases
+    await window.unifiedSearch.loadDatabases();
+  } catch(e) { console.error("Load error:", e); }
+  finally {
+    scheduleHideStartupLoader();
+  }
+})();
+</script>
+
+<script>
+// ---- Helpers ----
+const $ = id => document.getElementById(id);
+const show     = id => $(id).style.display = "block";
+const showFlex = id => $(id).style.display = "flex";
+const hide     = id => $(id).style.display = "none";
+
+window.resetView = () => {
+  hide("loadingState"); hide("notFoundState");
+  hide("clientCard"); hide("multiResults"); hide("unifiedResults");
+  $("searchInput").value = "";
+  $("searchInput").focus();
+};
+
+const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+
+function fmtBirthdate(bd) {
+  if (!bd) return "—";
+  const p = bd.split("-");
+  if (p.length === 3) return `${MONTHS[parseInt(p[1],10)-1]||p[1]} ${parseInt(p[2],10)}, ${p[0]}`;
+  return bd;
+}
+
+function normalizeAssist(a) {
+  if (!a) return null;
+  const m = { burial:"Burial", medical:"Medical", educational:"Educational", calamity:"Calamity", solicitation:"Solicitation" };
+  return m[String(a).trim().toLowerCase()] || String(a).trim() || null;
+}
+
+function assistBadgeClass(a) {
+  return { Burial:"b-burial", Medical:"b-medical", Educational:"b-edu", Calamity:"b-calamity", Solicitation:"b-solicitation" }[a] || "b-id";
+}
+
+function statusBadgeClass(s) {
+  return { "Claimed":"b-claimed","Not Claimed":"b-not","In Process":"b-process","Duplicate":"b-dup" }[s] || "b-not";
+}
+
+// ---- Format date for display ----
+function formatDateForDisplay(dateStr) {
+  if (!dateStr || dateStr === "—") return "—";
+  try {
+    const parts = dateStr.split("-");
+    if (parts.length !== 3) return dateStr;
+    const [y, m, d] = parts;
+    const date = new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    return `${monthNames[date.getMonth()]} ${parseInt(d)}, ${y}`;
+  } catch {
+    return dateStr;
+  }
+}
+
+// ---- Get status class ----
+function getStatusClass(status) {
+  const s = (status || "").toLowerCase();
+  if (s === "done" || s === "completed" || s === "released") return "status-done";
+  if (s === "pending") return "status-pending";
+  if (s === "in progress") return "status-in-progress";
+  return "status-default";
+}
+
+// ---- Show unified results ----
+function showUnifiedResults(searchResult) {
+  hide("multiResults"); hide("notFoundState"); hide("loadingState"); hide("clientCard");
+
+  if (!searchResult.success) {
+    $("notFoundQuery").textContent = searchResult.query || searchResult.message;
+    show("notFoundState");
+    return;
+  }
+
+  const results = searchResult.results;
+  $("unifiedQuery").textContent = `Results for "${searchResult.query}"`;
+  
+  // Update summary badges
+  $("totalBadge").textContent = `${searchResult.count} record${searchResult.count !== 1 ? "s" : ""}`;
+  
+  if (searchResult.systems.cas > 0) {
+    const el = $("casBadge");
+    el.textContent = `CAS: ${searchResult.systems.cas}`;
+    el.style.display = "inline-flex";
+  } else {
+    $("casBadge").style.display = "none";
+  }
+  
+  if (searchResult.systems.bedridden > 0) {
+    const el = $("bedriddenBadge");
+    if (el) {
+      el.textContent = `Bedridden: ${searchResult.systems.bedridden}`;
+      el.style.display = "inline-flex";
+    }
+  } else {
+    const el = $("bedriddenBadge");
+    if (el) el.style.display = "none";
+  }
+  
+  if (searchResult.systems.devices > 0) {
+    const el = $("deviceBadge");
+    el.textContent = `Device: ${searchResult.systems.devices}`;
+    el.style.display = "inline-flex";
+  } else {
+    $("deviceBadge").style.display = "none";
+  }
+  
+  if (searchResult.systems.medicines > 0) {
+    const el = $("medicineBadge");
+    el.textContent = `Medicine: ${searchResult.systems.medicines}`;
+    el.style.display = "inline-flex";
+  } else {
+    $("medicineBadge").style.display = "none";
+  }
+
+  // Build table rows
+  const tbody = $("unifiedTableBody");
+  tbody.innerHTML = results.map(r => {
+    const systemClass = r.system.toLowerCase();
+    const statusClass = getStatusClass(r.status);
+    const dateDisplay = formatDateForDisplay(r.date);
+    
+    return `
+      <tr>
+        <td><span class="system-pill ${systemClass}">${r.system}</span></td>
+        <td class="date-col">${dateDisplay}</td>
+        <td class="name-col">${r.name}</td>
+        <td>${r.type || "—"}</td>
+        <td>${r.category || "—"}</td>
+        <td class="barangay-col">${r.barangay || "—"}</td>
+        <td><span class="status-pill ${statusClass}">${r.status || "—"}</span></td>
+        <td class="notes-col" title="${r.notes || ""}">${r.notes || "—"}</td>
+      </tr>
+    `;
+  }).join("");
+
+  // Store data for export
+  window._unifiedResults = results;
+  show("unifiedResults");
+}
+
+// ---- Export unified results ----
+window.exportUnifiedResults = () => {
+  if (!window._unifiedResults || window._unifiedResults.length === 0) {
+    alert("No results to export");
+    return;
+  }
+
+  // Prepare data for export
+  const exportData = window._unifiedResults.map(r => ({
+    System: r.system,
+    Date: formatDateForDisplay(r.date),
+    "Name/Patient": r.name,
+    "Record/Request": r.type,
+    "Category/Purpose": r.category,
+    Barangay: r.barangay || "—",
+    Status: r.status || "—",
+    Notes: r.notes || "—"
+  }));
+
+  // Create CSV
+  const headers = Object.keys(exportData[0]);
+  const csv = [
+    headers.join(","),
+    ...exportData.map(row =>
+      headers.map(h => {
+        let val = row[h] || "";
+        if (val.includes(",") || val.includes('"') || val.includes("\n")) {
+          val = `"${val.replace(/"/g, '""')}"`;
+        }
+        return val;
+      }).join(",")
+    )
+  ].join("\n");
+
+  // Download
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = `unified-search-results-${new Date().toISOString().slice(0,10)}.csv`;
+  link.click();
+};
+
+// ---- Populate single card ----
+function showCard(c) {
+  hide("multiResults"); hide("notFoundState"); hide("loadingState"); hide("unifiedResults");
+
+  const assist  = normalizeAssist(c.assistance);
+  const status  = c.status || "Not Claimed";
+  const full    = `${c.lastName || ""}, ${c.firstName || ""} ${c.middleName || ""} ${c.extraName || ""}`.replace(/\s+/g," ").trim();
+
+  $("cardAvatar").textContent    = (c.lastName?.[0] || "?").toUpperCase();
+  $("cardName").textContent      = full;
+  $("cardIdBadge").textContent   = c.clientId || "—";
+
+  // Assistance badge
+  const ab = $("cardAssistBadge");
+  if (assist) {
+    ab.textContent = assist;
+    ab.className   = `badge ${assistBadgeClass(assist)}`;
+    ab.style.display = "inline-block";
+  } else {
+    ab.style.display = "none";
+  }
+
+  // Status badge
+  const sb = $("cardStatusBadge");
+  sb.textContent = status;
+  sb.className   = `badge ${statusBadgeClass(status)}`;
+
+  $("cardBarangay").textContent   = c.barangay    || "—";
+  $("cardStreet").textContent     = c.street      || "—";
+  $("cardContact").textContent    = c.contact     || "—";
+  $("cardBirthdate").textContent  = fmtBirthdate(c.birthdate);
+  $("cardAge").textContent        = c.age != null  ? `${c.age} years old` : "—";
+  $("cardSex").textContent        = c.sex         || "—";
+  $("cardCivil").textContent      = c.civilStatus || "—";
+  $("cardFamily").textContent     = c.familyMembers != null ? `${c.familyMembers} member(s)` : "—";
+  $("cardOccupation").textContent = c.occupation  || "—";
+  $("cardSalary").textContent     = c.salary != null ? `₱${Number(c.salary).toLocaleString("en-PH")}` : "—";
+  $("cardAssistance").textContent = assist || "Not specified";
+  $("cardStatus").textContent     = status;
+
+  // Show claimed date if status is Claimed
+  const cdItem = $("cardClaimedDateItem");
+  const cdVal  = $("cardClaimedDate");
+  if (status === "Claimed" && c.claimedDate) {
+    const cd = c.claimedDate.toDate ? c.claimedDate.toDate() : new Date(c.claimedDate);
+    cdVal.textContent  = cd.toLocaleDateString("en-PH",{year:"numeric",month:"long",day:"numeric"});
+    cdItem.style.display = "flex";
+    cdItem.style.flexDirection = "column";
+  } else {
+    cdItem.style.display = "none";
+  }
+
+  show("clientCard");
+}
+
+// ---- Multiple results list ----
+function showMulti(results, query) {
+  hide("loadingState"); hide("notFoundState"); hide("clientCard"); hide("unifiedResults");
+  $("multiTitle").textContent = `${results.length} record(s) found for "${query}" — tap to view details:`;
+
+  $("resultList").innerHTML = results.map((c, i) => {
+    const assist = normalizeAssist(c.assistance);
+    const status = c.status || "Not Claimed";
+    const full   = `${c.lastName || ""}, ${c.firstName || ""} ${c.middleName || ""}`.trim();
+    const init   = (c.lastName?.[0] || "?").toUpperCase();
+    return `
+      <div class="result-item" onclick="window._pick(${i})">
+        <div class="ri-avatar">${init}</div>
+        <div class="ri-info">
+          <div class="ri-name">${full}</div>
+          <div class="ri-meta">
+            <span class="badge b-id" style="font-size:.68rem">${c.clientId||"—"}</span>
+            ${assist?`<span class="badge ${assistBadgeClass(assist)}" style="font-size:.68rem">${assist}</span>`:""}
+            <span class="badge ${statusBadgeClass(status)}" style="font-size:.68rem">${status}</span>
+            <span>${c.barangay||""}</span>
+          </div>
+        </div>
+        <div class="ri-arrow">›</div>
+      </div>`;
+  }).join("");
+
+  window._searchResults = results;
+  window._pick = i => showCard(window._searchResults[i]);
+  show("multiResults");
+}
+
+// ---- MAIN SEARCH ----
+window.doSearch = async () => {
+  const raw = $("searchInput").value.trim();
+  if (!raw) return;
+
+  hide("notFoundState"); hide("clientCard"); hide("multiResults"); hide("unifiedResults");
+  show("loadingState");
+
+  await new Promise(r => setTimeout(r, 300)); // spinner UX
+
+  // Try unified search first (across all databases)
+  const unifiedResult = window.unifiedSearch.search(raw);
+  
+  // If unified search found results, show them
+  if (unifiedResult.success) {
+    hide("loadingState");
+    showUnifiedResults(unifiedResult);
+    return;
+  }
+
+  // Otherwise fall back to Firestore client search
+  const q = raw.toLowerCase();
+  const results = allClients.filter(c => {
+    const n1 = `${c.lastName||""} ${c.firstName||""} ${c.middleName||""}`.toLowerCase();
+    const n2 = `${c.firstName||""} ${c.lastName||""}`.toLowerCase();
+    const id = (c.clientId||"").toLowerCase();
+    return n1.includes(q) || n2.includes(q) || id.includes(q);
+  });
+
+  hide("loadingState");
+
+  if (!results.length) {
+    $("notFoundQuery").textContent = raw;
+    show("notFoundState");
+  } else if (results.length === 1) {
+    showCard(results[0]);
+  } else {
+    showMulti(results, raw);
+  }
+};
+</script>
+
+</body>
+</html>
