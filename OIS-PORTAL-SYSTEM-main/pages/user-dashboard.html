@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>User Dashboard — OIS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    .status-claimed    { background:#dcfce7; color:#15803d; border:1px solid #bbf7d0; }
+    .status-not        { background:#fee2e2; color:#dc2626; border:1px solid #fecaca; }
+    .status-inprocess  { background:#fef3c7; color:#b45309; border:1px solid #fde68a; }
+    .status-duplicate  { background:#ede9fe; color:#6d28d9; border:1px solid #ddd6fe; }
+
+    body { position:relative; overflow-x:hidden; background:var(--bg); }
+    .layout { position:relative; z-index:2; }
+    .orb { position:fixed; border-radius:50%; pointer-events:none; z-index:1; }
+    .orb1 { display:none; }
+    .orb2 { display:none; }
+    .page-splash {
+      position:fixed;
+      inset:0;
+      z-index:9999;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      background:linear-gradient(135deg,#0d3321 0%,#1a6640 55%,#2d9e6b 100%);
+      transition:opacity .5s ease, visibility .5s ease;
+    }
+    .page-splash.hidden { opacity:0; visibility:hidden; pointer-events:none; }
+    .page-splash.gone { display:none; }
+    .page-splash-logo {
+      width:108px;
+      height:108px;
+      border-radius:50%;
+      object-fit:cover;
+      border:4px solid rgba(255,255,255,.25);
+      box-shadow:0 0 0 14px rgba(201,162,39,.15), 0 0 0 28px rgba(201,162,39,.06);
+      animation:userSplashPulse 2s ease-in-out infinite;
+      margin-bottom:24px;
+    }
+    @keyframes userSplashPulse {
+      0%,100% { box-shadow:0 0 0 14px rgba(201,162,39,.15), 0 0 0 28px rgba(201,162,39,.06); }
+      50% { box-shadow:0 0 0 20px rgba(201,162,39,.22), 0 0 0 40px rgba(201,162,39,.05); }
+    }
+    .page-splash-title { color:#fff; font-family:'DM Sans',sans-serif; font-size:1.6rem; font-weight:700; margin-bottom:.3rem; text-align:center; line-height:1.15; }
+    .page-splash-sub { color:#e8bb3e; letter-spacing:.16em; text-transform:uppercase; font-size:.82rem; margin-bottom:1.8rem; text-align:center; }
+    .page-splash-bar-wrap { width:220px; height:3px; background:rgba(255,255,255,.12); border-radius:999px; overflow:hidden; }
+    .page-splash-bar { height:100%; width:100%; background:#c9a227; transform-origin:left center; animation:pageSplashLoad 1s ease forwards; }
+    @keyframes pageSplashLoad { from { transform:scaleX(0); } to { transform:scaleX(1); } }
+  </style>
+</head>
+<body>
+  <div class="page-splash" id="pageSplash">
+    <img class="page-splash-logo" src="../logo.png" alt="Logo">
+    <div class="page-splash-title">User Dashboard</div>
+    <div class="page-splash-sub">Congressman Gerald Galang</div>
+    <div class="page-splash-bar-wrap"><div class="page-splash-bar"></div></div>
+  </div>
+  <div class="orb orb1"></div>
+  <div class="orb orb2"></div>
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon"><img src="../logo.png" alt="Logo" style="width:32px;height:32px;object-fit:cover;border-radius:50%"/></div>
+      <div class="logo-text">OIS Portal<span>User Panel</span></div>
+    </div>
+    <div class="sidebar-section-label">Navigation</div>
+    <a class="nav-item active" data-page="dashboard" onclick="showPage('dashboard')">
+      <span class="nav-icon">📊</span> Dashboard
+    </a>
+    <a class="nav-item" data-page="clients" onclick="showPage('clients')">
+      <span class="nav-icon">👥</span> Client Records
+    </a>
+    <div class="sidebar-user">
+      <div class="user-avatar" id="avatarInitial">U</div>
+      <div class="user-info">
+        <div class="uname" id="sidebarName">User</div>
+        <div class="urole">Staff</div>
+      </div>
+      <button class="btn-logout" onclick="doLogout()" title="Logout">⏻</button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="topbar">
+      <h1 id="pageTitle">Dashboard</h1>
+      <div class="topbar-actions">
+        <span id="topbarDate" style="font-size:.8rem;color:var(--muted)"></span>
+      </div>
+    </div>
+    <div class="content dashboard-shell">
+
+      <!-- === DASHBOARD PAGE === -->
+      <div id="page-dashboard">
+        <div class="dashboard-hero">
+          <div class="dashboard-hero-content">
+            <div class="dashboard-hero-eyebrow">Official Assistance System</div>
+            <div class="dashboard-hero-title">Welcome back, <span id="welcomeName">Staff</span></div>
+            <div class="dashboard-hero-sub" id="welcomeDate"></div>
+          </div>
+          <div class="dashboard-hero-mark">GG</div>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-card"><div class="stat-icon">👥</div><div class="stat-label">Total Clients</div><div class="stat-value" id="uStatTotal">—</div></div>
+          <div class="stat-card"><div class="stat-icon">⚰️</div><div class="stat-label">Burial Assistance</div><div class="stat-value" id="uStatBurial">—</div></div>
+          <div class="stat-card"><div class="stat-icon">🏥</div><div class="stat-label">Medical Assistance</div><div class="stat-value" id="uStatMedical">—</div></div>
+          <div class="stat-card"><div class="stat-icon">🎓</div><div class="stat-label">Educational Assist.</div><div class="stat-value" id="uStatEdu">—</div></div>
+          <div class="stat-card"><div class="stat-icon">🌪️</div><div class="stat-label">Calamity</div><div class="stat-value" id="uStatCalamity">—</div></div>
+          <div class="stat-card"><div class="stat-icon">🤝</div><div class="stat-label">Solicitation</div><div class="stat-value" id="uStatSolicitation">—</div></div>
+          <div class="stat-card"><div class="stat-icon">🏘️</div><div class="stat-label">Barangays Served</div><div class="stat-value" id="uStatBarangay">—</div></div>
+          <div class="stat-card"><div class="stat-icon">📝</div><div class="stat-label">My Inputs</div><div class="stat-value" id="uStatMine">—</div></div>
+        </div>
+
+        <div class="charts-grid">
+          <div class="chart-card" style="grid-column:span 2"><h4>Clients by Assistance Type</h4><canvas id="uChartAssist" height="120"></canvas></div>
+          <div class="chart-card"><h4>Clients by Barangay (Top 8)</h4><canvas id="uChartBarangay" height="200"></canvas></div>
+          <div class="chart-card"><h4>Sex Distribution</h4><canvas id="uChartSex" height="200"></canvas></div>
+          <div class="chart-card"><h4>Civil Status</h4><canvas id="uChartCivil" height="200"></canvas></div>
+        </div>
+
+        <div style="margin-top:1.4rem">
+          <div style="font-family:'DM Sans',sans-serif;font-weight:700;font-size:.95rem;margin-bottom:.8rem;color:var(--text)">📋 My Recent Entries</div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Client ID</th><th>Name</th><th>Barangay</th><th>Assistance</th><th>Date Added</th></tr></thead>
+              <tbody id="myRecentBody"><tr><td colspan="5" style="text-align:center;color:var(--muted);padding:1.5rem">Loading…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- === CLIENTS PAGE === -->
+      <div id="page-clients" style="display:none">
+        <div style="display:flex;gap:.8rem;align-items:center;flex-wrap:wrap;margin-bottom:1.2rem;">
+          <div class="search-bar" style="flex:1;min-width:200px">
+            <span>🔍</span>
+            <input type="text" id="searchInput" placeholder="Search by name, ID, barangay…" oninput="filterClients()"/>
+          </div>
+          <button class="btn btn-primary" onclick="openClientModal()">＋ Add Client</button>
+        </div>
+        <div style="background:rgba(37,99,235,.08);border:1px solid rgba(37,99,235,.2);border-radius:10px;padding:.8rem 1.1rem;margin-bottom:1rem;font-size:.84rem;color:var(--muted);display:flex;gap:.6rem;align-items:center">
+          <span>ℹ️</span> You can add new client records. Editing and deleting records requires admin access.
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Client ID</th><th>Last Name</th><th>First Name</th><th>Middle</th>
+                <th>Barangay</th><th>Contact</th><th>Sex</th><th>Age</th>
+                <th>Assistance</th><th>Status</th><th>Added By</th><th>Date Added</th><th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="clientTableBody"><tr><td colspan="13" style="text-align:center;color:var(--muted);padding:2rem">Loading…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ====== CLIENT MODAL ====== -->
+<div class="modal-overlay" id="clientModal">
+  <div class="modal" style="max-width:720px">
+    <div class="modal-header">
+      <span style="font-size:1.2rem">👤</span>
+      <h3>Add Client</h3>
+      <button class="modal-close" onclick="closeModal('clientModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="uDupWarning" style="display:none;background:#fef3c7;border:1.5px solid #fde68a;border-radius:10px;padding:.9rem 1.1rem;margin-bottom:1rem;font-size:.87rem;color:#92400e;gap:.7rem;align-items:flex-start">
+        <span style="font-size:1.2rem;flex-shrink:0">⚠️</span>
+        <div id="uDupWarningText"></div>
+      </div>
+      <div class="form-grid">
+        <div class="form-group"><label>Last Name *</label><input id="fLastName" placeholder="Dela Cruz" oninput="uCheckDuplicate()"/></div>
+        <div class="form-group"><label>First Name *</label><input id="fFirstName" placeholder="Juan" oninput="uCheckDuplicate()"/></div>
+        <div class="form-group"><label>Middle Name *</label><input id="fMiddleName" placeholder="Santos" oninput="uCheckDuplicate()"/></div>
+        <div class="form-group"><label>Extra Name (optional)</label><input id="fExtraName" placeholder="Jr., Sr.…"/></div>
+        <div class="form-group"><label>Barangay *</label>
+          <select id="fBarangay">
+            <option value="">— Select Barangay —</option>
+            <option>Marulas</option>
+            <option>Mapulang Lupa</option>
+            <option>General Tiburcio De Leon</option>
+            <option>Maysan</option>
+            <option>Ugong</option>
+            <option>Parada</option>
+            <option>Paso De Blas</option>
+            <option>Bagbaguin</option>
+            <option>Karuhatan</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Street *</label><input id="fStreet" placeholder="123 Rizal St."/></div>
+        <div class="form-group"><label>Contact No. (PH) *</label><input id="fContact" placeholder="09XXXXXXXXXX" maxlength="12" inputmode="numeric" oninput="this.value=this.value.replace(/\D/g,'').slice(0,12)"/></div>
+        <div class="form-group full" style="grid-column:span 1">
+          <label>Birthdate *</label>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem">
+            <select id="fBdMonth" onchange="computeAge()" style="background:var(--input-bg);border:1.5px solid var(--border);color:var(--text);padding:.65rem .9rem;border-radius:9px;font-size:.9rem;font-family:'DM Sans',sans-serif;outline:none;width:100%">
+              <option value="">Month</option>
+              <option value="01">January</option><option value="02">February</option><option value="03">March</option>
+              <option value="04">April</option><option value="05">May</option><option value="06">June</option>
+              <option value="07">July</option><option value="08">August</option><option value="09">September</option>
+              <option value="10">October</option><option value="11">November</option><option value="12">December</option>
+            </select>
+            <select id="fBdDay" onchange="computeAge()" style="background:var(--input-bg);border:1.5px solid var(--border);color:var(--text);padding:.65rem .9rem;border-radius:9px;font-size:.9rem;font-family:'DM Sans',sans-serif;outline:none;width:100%">
+              <option value="">Day</option>
+            </select>
+            <select id="fBdYear" onchange="computeAge()" style="background:var(--input-bg);border:1.5px solid var(--border);color:var(--text);padding:.65rem .9rem;border-radius:9px;font-size:.9rem;font-family:'DM Sans',sans-serif;outline:none;width:100%">
+              <option value="">Year</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group"><label>Age</label><input id="fAge" type="number" readonly placeholder="Auto-computed"/></div>
+        <div class="form-group"><label>Sex *</label>
+          <select id="fSex"><option value="">— Select —</option><option>Male</option><option>Female</option></select>
+        </div>
+        <div class="form-group"><label>Civil Status *</label>
+          <select id="fCivilStatus"><option value="">— Select —</option><option>Single</option><option>Married</option><option>Widowed</option><option>Separated</option><option>Annulled</option></select>
+        </div>
+        <div class="form-group"><label>No. of Family Members *</label><input id="fFamilyMembers" type="number" min="1" placeholder="4"/></div>
+        <div class="form-group"><label>Occupation *</label><input id="fOccupation" placeholder="Farmer"/></div>
+        <div class="form-group"><label>Monthly Salary (₱) *</label><input id="fSalary" type="number" min="0" placeholder="5000"/></div>
+        <div class="form-group"><label>Type of Assistance *</label>
+          <select id="fAssistance"><option value="">— Select —</option><option>Burial</option><option>Medical</option><option>Educational</option><option>Calamity</option><option>Solicitation</option></select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('clientModal')">Cancel</button>
+      <button class="btn btn-primary" id="saveBtn" onclick="saveClient()">💾 Save Client</button>
+    </div>
+  </div>
+</div>
+
+<!-- VIEW CLIENT MODAL -->
+<div class="modal-overlay" id="viewClientModal">
+  <div class="modal" style="max-width:580px">
+    <div class="modal-header">
+      <span>🪪</span><h3>Client Information</h3>
+      <button class="modal-close" onclick="closeModal('viewClientModal')">✕</button>
+    </div>
+    <div class="modal-body" id="viewClientBody"></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('viewClientModal')">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  function populateBdSelects() {
+    const dayEl  = document.getElementById("fBdDay");
+    const yearEl = document.getElementById("fBdYear");
+    if (!dayEl || !yearEl) return;
+    for (let i = 1; i <= 31; i++) {
+      const o = document.createElement("option");
+      o.value = String(i).padStart(2,"0");
+      o.textContent = i;
+      dayEl.appendChild(o);
+    }
+    const curYear = new Date().getFullYear();
+    for (let y = curYear; y >= curYear - 100; y--) {
+      const o = document.createElement("option");
+      o.value = y; o.textContent = y;
+      yearEl.appendChild(o);
+    }
+  }
+  document.addEventListener("DOMContentLoaded", populateBdSelects);
+})();
+</script>
+<script src="../js/firebase-config.js"></script>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import {
+  getFirestore, collection, doc, getDoc, getDocs,
+  addDoc, query, orderBy, serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+const app  = initializeApp(window.firebaseConfig);
+const auth = getAuth(app);
+const db   = getFirestore(app);
+const pageSplash = document.getElementById("pageSplash");
+
+function showToast(msg, type = "info") {
+  let container = document.querySelector(".toast-container");
+  if (!container) {
+    container = document.createElement("div");
+    container.className = "toast-container";
+    document.body.appendChild(container);
+  }
+  const t = document.createElement("div");
+  const icons = { success: "✅", error: "❌", info: "ℹ️" };
+  t.className = `toast ${type}`;
+  t.innerHTML = `<span>${icons[type] || "ℹ️"}</span><span>${msg}</span>`;
+  container.appendChild(t);
+  setTimeout(() => { t.style.opacity = "0"; t.style.transition = "opacity .3s"; setTimeout(() => t.remove(), 300); }, 3500);
+}
+
+function openModal(id) { document.getElementById(id)?.classList.add("open"); }
+function closeModal(id) { document.getElementById(id)?.classList.remove("open"); }
+
+function generateClientId(seq) {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, "0");
+  const n = String(seq).padStart(4, "0");
+  return `${y}${m}${n}`;
+}
+
+let allClients  = [];
+let currentUser = null;
+let uCharts     = {};
+
+function hidePageSplash() {
+  if (!pageSplash) return;
+  pageSplash.classList.add("hidden");
+}
+
+pageSplash?.addEventListener("transitionend", () => {
+  if (pageSplash.classList.contains("hidden")) {
+    pageSplash.classList.add("gone");
+  }
+});
+
+// ---- AUTH GUARD ----
+const unsubUser = onAuthStateChanged(auth, async (user) => {
+  unsubUser(); // fire once only — prevents redirect loop
+  if (!user) { window.location.href = "../index.html"; return; }
+  try {
+    const snap = await getDoc(doc(db, "users", user.uid));
+    if (!snap.exists()) { window.location.href = "../index.html"; return; }
+
+    currentUser = user;
+    const uData = snap.data();
+    const name  = uData.displayName || user.email;
+
+    document.getElementById("sidebarName").textContent   = name;
+    document.getElementById("avatarInitial").textContent = name[0].toUpperCase();
+    document.getElementById("welcomeName").textContent   = name;
+
+    const dateStr = new Date().toLocaleDateString("en-PH", { weekday:"long", year:"numeric", month:"long", day:"numeric" });
+    document.getElementById("topbarDate").textContent  = dateStr;
+    document.getElementById("welcomeDate").textContent = dateStr;
+
+    await loadClients();
+    loadDashboard();
+    setTimeout(hidePageSplash, 900);
+  } catch(e) {
+    console.error("Auth error:", e);
+    window.location.href = "../index.html";
+  }
+});
+
+// ---- PAGE NAV ----
+window.showPage = (page) => {
+  ["dashboard","clients"].forEach(p => {
+    document.getElementById(`page-${p}`).style.display = p === page ? "block" : "none";
+  });
+  document.querySelectorAll(".nav-item").forEach(el => el.classList.toggle("active", el.dataset.page === page));
+  document.getElementById("pageTitle").textContent = { dashboard:"Dashboard", clients:"Client Records" }[page];
+};
+
+window.doLogout = async () => { await signOut(auth); window.location.href = "../index.html"; };
+
+// ---- LOAD CLIENTS ----
+async function loadClients() {
+  try {
+    const q    = query(collection(db, "clients"), orderBy("createdAt","desc"));
+    const snap = await getDocs(q);
+    allClients = snap.docs.map(d => ({ firestoreId: d.id, ...d.data() }));
+    renderClientTable(allClients);
+  } catch(e) {
+    console.error("Load error:", e);
+    const tbody = document.getElementById("clientTableBody");
+    if (tbody) tbody.innerHTML = `<tr><td colspan="11" style="text-align:center;color:var(--red);padding:2rem">⚠️ Failed to load. Check Firestore security rules.</td></tr>`;
+    showToast("Could not load clients. Check Firestore rules.", "error");
+  }
+}
+
+// ---- DASHBOARD ----
+function loadDashboard() {
+  const data = allClients;
+  document.getElementById("uStatTotal").textContent    = data.length;
+  document.getElementById("uStatBurial").textContent   = data.filter(c=>c.assistance==="Burial").length;
+  document.getElementById("uStatMedical").textContent  = data.filter(c=>c.assistance==="Medical").length;
+  document.getElementById("uStatEdu").textContent      = data.filter(c=>c.assistance==="Educational").length;
+  document.getElementById("uStatCalamity").textContent = data.filter(c=>c.assistance==="Calamity").length;
+  document.getElementById("uStatSolicitation").textContent = data.filter(c=>c.assistance==="Solicitation").length;
+  document.getElementById("uStatBarangay").textContent = new Set(data.map(c=>c.barangay).filter(Boolean)).size;
+  document.getElementById("uStatMine").textContent     = currentUser ? data.filter(c=>c.addedBy===currentUser.uid).length : 0;
+  drawCharts(data);
+  renderMyRecent(data);
+}
+
+function drawCharts(data) {
+  const aLabels = ["Burial","Medical","Educational","Calamity","Solicitation"];
+  rChart("uChartAssist","bar", aLabels, aLabels.map(a=>data.filter(c=>c.assistance===a).length), ["#ef4444","#3b82f6","#8b5cf6","#f97316","#06b6d4"]);
+
+  const bMap = {};
+  data.forEach(c=>{ if(c.barangay) bMap[c.barangay]=(bMap[c.barangay]||0)+1; });
+  const sorted = Object.entries(bMap).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  rChart("uChartBarangay","bar", sorted.map(x=>x[0]), sorted.map(x=>x[1]), ["#2563eb"], true);
+
+  rChart("uChartSex","doughnut",["Male","Female"],[data.filter(c=>c.sex==="Male").length, data.filter(c=>c.sex==="Female").length],["#3b82f6","#f472b6"]);
+
+  const csMap={};
+  data.forEach(c=>{ if(c.civilStatus) csMap[c.civilStatus]=(csMap[c.civilStatus]||0)+1; });
+  rChart("uChartCivil","doughnut",Object.keys(csMap),Object.values(csMap),["#22c55e","#f59e0b","#8b5cf6","#ef4444","#06b6d4"]);
+}
+
+function rChart(id, type, labels, data, colors, indexAxis=false) {
+  if (uCharts[id]) uCharts[id].destroy();
+  const ctx = document.getElementById(id)?.getContext("2d");
+  if (!ctx) return;
+  uCharts[id] = new Chart(ctx, {
+    type, data: { labels, datasets:[{ data, backgroundColor: colors.length===1?data.map(()=>colors[0]+"cc"):colors.map(c=>c+"cc"), borderColor: colors.length===1?colors[0]:colors, borderWidth:1.5 }] },
+    options: { responsive:true, indexAxis:indexAxis?"y":"x", plugins:{legend:{labels:{color:"#8b949e",font:{family:"DM Sans"}}}}, scales: type==="bar"?{x:{ticks:{color:"#8b949e"},grid:{color:"#30363d"}},y:{ticks:{color:"#8b949e"},grid:{color:"#30363d"}}}:undefined }
+  });
+}
+
+function renderMyRecent(data) {
+  const mine  = currentUser ? data.filter(c=>c.addedBy===currentUser.uid).slice(0,5) : [];
+  const tbody = document.getElementById("myRecentBody");
+  const badge = { Burial:"badge-red", Medical:"badge-blue", Educational:"badge-purple", Calamity:"badge-orange", Solicitation:"badge-cyan" };
+  if (!mine.length) { tbody.innerHTML=`<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:1.5rem">You haven't added any clients yet.</td></tr>`; return; }
+  tbody.innerHTML = mine.map(c => {
+    const d = c.createdAt ? (c.createdAt.toDate?c.createdAt.toDate():new Date(c.createdAt)) : null;
+    return `<tr>
+      <td><span class="badge badge-green" style="cursor:pointer" onclick="viewClient('${c.firestoreId}')">${c.clientId||"—"}</span></td>
+      <td onclick="viewClient('${c.firestoreId}')" style="cursor:pointer;font-weight:600;color:var(--accent2)">${c.lastName}, ${c.firstName}</td>
+      <td>${c.barangay||"—"}</td>
+      <td><span class="badge ${badge[c.assistance]||'badge-blue'}">${c.assistance||"Not set"}</span></td>
+      <td style="color:var(--muted);font-size:.82rem">${d?d.toLocaleDateString("en-PH",{year:"numeric",month:"short",day:"numeric"}):"—"}</td>
+    </tr>`;
+  }).join("");
+}
+
+// ===== PAGINATION (USER) =====
+const PAGE_SIZE_U = 50;
+let userCurrentPage = 1;
+let userFilteredData = [];
+
+// ---- CLIENT TABLE ----
+function renderClientTable(data) {
+  userFilteredData = data;
+  userCurrentPage  = 1;
+  renderUserPage();
+}
+
+function renderUserPage() {
+  const tbody  = document.getElementById("clientTableBody");
+  if (!tbody) return;
+  const total  = userFilteredData.length;
+  const pages  = Math.ceil(total / PAGE_SIZE_U) || 1;
+  userCurrentPage = Math.min(userCurrentPage, pages);
+  const start  = (userCurrentPage - 1) * PAGE_SIZE_U;
+  const slice  = userFilteredData.slice(start, start + PAGE_SIZE_U);
+
+  if (!total) {
+    tbody.innerHTML = `<tr><td colspan="13" style="text-align:center;color:var(--muted);padding:2rem">No clients found.</td></tr>`;
+    renderUserPagination(0, 0, 0);
+    return;
+  }
+
+  const assistBadge  = {Burial:"badge-red",Medical:"badge-blue",Educational:"badge-purple",Calamity:"badge-orange",Solicitation:"badge-cyan"};
+  const statusBadge  = {"Claimed":"badge status-claimed","Not Claimed":"badge status-not","In Process":"badge status-inprocess","Duplicate":"badge status-duplicate"};
+
+  tbody.innerHTML = slice.map(c => {
+    const d       = c.createdAt ? (c.createdAt.toDate?c.createdAt.toDate():new Date(c.createdAt)) : null;
+    const dateStr = d ? d.toLocaleDateString("en-PH",{year:"numeric",month:"short",day:"numeric"}) : "—";
+    const timeStr = d ? d.toLocaleTimeString("en-PH",{hour:"2-digit",minute:"2-digit"}) : "";
+    const st      = c.status||"Not Claimed";
+    return `<tr>
+      <td><span class="badge badge-green" style="cursor:pointer" onclick="viewClient('${c.firestoreId}')">${c.clientId||"—"}</span></td>
+      <td onclick="viewClient('${c.firestoreId}')" style="cursor:pointer"><strong>${c.lastName}</strong></td>
+      <td onclick="viewClient('${c.firestoreId}')" style="cursor:pointer">${c.firstName}</td>
+      <td onclick="viewClient('${c.firestoreId}')" style="cursor:pointer">${c.middleName}</td>
+      <td>${c.barangay||"—"}</td>
+      <td>${c.contact}</td>
+      <td>${c.sex}</td>
+      <td>${c.age}</td>
+      <td><span class="badge ${assistBadge[c.assistance]||''}">${c.assistance||"—"}</span></td>
+      <td><span class="${statusBadge[st]||'badge status-not'}">${st}</span></td>
+      <td><span style="font-size:.82rem;color:var(--muted)">${c.addedByName||"—"}</span></td>
+      <td><span style="font-size:.78rem;color:var(--muted)">${dateStr}${timeStr?"<br><span style='font-size:.72rem'>"+timeStr+"</span>":""}</span></td>
+      <td><button class="btn btn-secondary btn-sm" onclick="viewClient('${c.firestoreId}')">👁 View</button></td>
+    </tr>`;
+  }).join("");
+
+  renderUserPagination(userCurrentPage, pages, total);
+}
+
+function renderUserPagination(page, pages, total) {
+  let el = document.getElementById("userPagination");
+  if (!el) {
+    el = document.createElement("div");
+    el.id = "userPagination";
+    document.querySelector("#page-clients .table-wrap").after(el);
+  }
+  if (pages <= 1) { el.innerHTML = ""; return; }
+
+  const start = (page-1)*PAGE_SIZE_U+1;
+  const end   = Math.min(page*PAGE_SIZE_U, total);
+
+  const btnNums = new Set([1, pages, page-2, page-1, page, page+1, page+2].filter(n=>n>=1&&n<=pages));
+  const sorted  = [...btnNums].sort((a,b)=>a-b);
+  let btns = "";
+  let prev = 0;
+  for (const n of sorted) {
+    if (prev && n - prev > 1) btns += `<span style="padding:0 .3rem;color:var(--muted)">…</span>`;
+    btns += `<button onclick="userGoPage(${n})" style="min-width:34px;height:34px;border-radius:8px;border:1.5px solid ${n===page?'var(--accent)':'var(--border)'};background:${n===page?'var(--accent)':'var(--card)'};color:${n===page?'#fff':'var(--text)'};font-family:'DM Sans',sans-serif;font-size:.83rem;font-weight:${n===page?700:400};cursor:pointer;transition:all .15s">${n}</button>`;
+    prev = n;
+  }
+
+  el.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.7rem;margin-top:.9rem;padding:.7rem 0">
+      <span style="font-size:.82rem;color:var(--muted)">Showing <strong>${start}–${end}</strong> of <strong>${total}</strong> records</span>
+      <div style="display:flex;align-items:center;gap:.35rem;flex-wrap:wrap">
+        <button onclick="userGoPage(${page-1})" ${page===1?'disabled':''} style="height:34px;padding:0 .8rem;border-radius:8px;border:1.5px solid var(--border);background:var(--card);color:var(--muted);font-size:.83rem;cursor:${page===1?'default':'pointer'};opacity:${page===1?.4:1};transition:all .15s">‹ Prev</button>
+        ${btns}
+        <button onclick="userGoPage(${page+1})" ${page===pages?'disabled':''} style="height:34px;padding:0 .8rem;border-radius:8px;border:1.5px solid var(--border);background:var(--card);color:var(--muted);font-size:.83rem;cursor:${page===pages?'default':'pointer'};opacity:${page===pages?.4:1};transition:all .15s">Next ›</button>
+      </div>
+    </div>`;
+}
+
+window.userGoPage = (p) => {
+  const pages = Math.ceil(userFilteredData.length / PAGE_SIZE_U) || 1;
+  if (p < 1 || p > pages) return;
+  userCurrentPage = p;
+  renderUserPage();
+  document.querySelector("#page-clients .table-wrap")?.scrollIntoView({behavior:"smooth",block:"start"});
+};
+
+window.filterClients = () => {
+  const q = document.getElementById("searchInput").value.toLowerCase();
+  renderClientTable(allClients.filter(c => [c.clientId,c.lastName,c.firstName,c.middleName,c.barangay,c.contact].join(" ").toLowerCase().includes(q)));
+};
+
+// ---- ADD CLIENT ----
+window.openClientModal = () => {
+  ["fLastName","fFirstName","fMiddleName","fExtraName","fBarangay","fStreet","fContact","fBdMonth","fBdDay","fBdYear","fAge","fSex","fCivilStatus","fFamilyMembers","fOccupation","fSalary","fAssistance"].forEach(id => { const el=document.getElementById(id); if(el) el.value=""; });
+  const warn = document.getElementById("uDupWarning");
+  if (warn) { warn.style.display="none"; warn.style.flexDirection=""; }
+  const btn = document.getElementById("saveBtn");
+  if (btn) { btn.disabled=false; btn.style.opacity="1"; }
+  openModal("clientModal");
+};
+
+let uDupTimer = null;
+window.uCheckDuplicate = () => {
+  clearTimeout(uDupTimer);
+  uDupTimer = setTimeout(() => {
+    const last  = document.getElementById("fLastName").value.trim().toLowerCase();
+    const first = document.getElementById("fFirstName").value.trim().toLowerCase();
+    const mid   = document.getElementById("fMiddleName").value.trim().toLowerCase();
+    const warn  = document.getElementById("uDupWarning");
+    const txt   = document.getElementById("uDupWarningText");
+    const btn   = document.getElementById("saveBtn");
+    if (!last || !first) { warn.style.display="none"; btn.disabled=false; btn.style.opacity="1"; return; }
+
+    const THREE_MO = 90 * 24 * 3600 * 1000;
+    const now = Date.now();
+    const matches = allClients.filter(c =>
+      c.lastName?.toLowerCase()===last &&
+      c.firstName?.toLowerCase()===first &&
+      (mid ? c.middleName?.toLowerCase()===mid : true)
+    );
+    if (!matches.length) { warn.style.display="none"; btn.disabled=false; btn.style.opacity="1"; return; }
+
+    const claimedRecent = matches.filter(c => {
+      if (c.status!=="Claimed") return false;
+      const claimedAt = c.claimedDate
+        ? (c.claimedDate.toDate ? c.claimedDate.toDate() : new Date(c.claimedDate))
+        : c.updatedAt
+          ? (c.updatedAt.toDate ? c.updatedAt.toDate() : new Date(c.updatedAt))
+          : null;
+      return claimedAt && (now - claimedAt.getTime()) < THREE_MO;
+    });
+
+    warn.style.display="flex"; warn.style.flexDirection="row";
+    if (claimedRecent.length) {
+      txt.innerHTML=`<strong>⛔ Duplicate Data Detected!</strong><br/>This client (ID: <strong>${claimedRecent[0].clientId}</strong>) already exists and their status was set to <strong>"Claimed"</strong> less than 3 months ago. The client has already claimed recently — please verify before proceeding.`;
+      btn.disabled=true; btn.style.opacity=".5";
+    } else {
+      const ids=matches.map(m=>m.clientId).join(", ");
+      txt.innerHTML=`<strong>⚠️ Possible Duplicate!</strong><br/>A client with this name already exists (ID: <strong>${ids}</strong>). You may still save — verify if this is a different person.`;
+      btn.disabled=false; btn.style.opacity="1";
+    }
+  }, 600);
+};
+
+window.computeAge = () => {
+  const m = document.getElementById("fBdMonth").value;
+  const d = document.getElementById("fBdDay").value;
+  const y = document.getElementById("fBdYear").value;
+  if (!m || !d || !y) { document.getElementById("fAge").value = ""; return; }
+  const bd = new Date(`${y}-${m}-${d}`);
+  if (!isNaN(bd)) document.getElementById("fAge").value = Math.floor((Date.now() - bd.getTime()) / (365.25*24*3600*1000));
+};
+
+window.saveClient = async () => {
+  const required = { fLastName:"Last Name", fFirstName:"First Name", fMiddleName:"Middle Name", fBarangay:"Barangay", fStreet:"Street", fContact:"Contact No.", fSex:"Sex", fCivilStatus:"Civil Status", fFamilyMembers:"No. of Family Members", fOccupation:"Occupation", fSalary:"Salary", fAssistance:"Type of Assistance" };
+  for (const [id, label] of Object.entries(required)) {
+    if (!document.getElementById(id).value.trim()) { showToast(`Please fill in: ${label}`, "error"); return; }
+  }
+  const contactVal = document.getElementById("fContact").value.replace(/\D/g,"");
+  if (contactVal.length !== 12) { showToast("Contact No. must be exactly 12 digits (e.g. 09XXXXXXXXXX).", "error"); return; }
+  const bdM = document.getElementById("fBdMonth").value;
+  const bdD = document.getElementById("fBdDay").value;
+  const bdY = document.getElementById("fBdYear").value;
+  if (!bdM || !bdD || !bdY) { showToast("Please select a complete Birthdate (Month, Day, Year).", "error"); return; }
+  const birthdate = `${bdY}-${bdM}-${bdD}`;
+
+  const btn = document.getElementById("saveBtn");
+  btn.disabled = true; btn.textContent = "Saving…";
+  try {
+    const uSnap   = await getDoc(doc(db, "users", currentUser.uid));
+    const userName = uSnap.exists() ? (uSnap.data().displayName || currentUser.email) : currentUser.email;
+    const allSnap  = await getDocs(collection(db, "clients"));
+    const clientId = generateClientId(allSnap.size + 1);
+
+    await addDoc(collection(db, "clients"), {
+      clientId,
+      lastName:      document.getElementById("fLastName").value.trim(),
+      firstName:     document.getElementById("fFirstName").value.trim(),
+      middleName:    document.getElementById("fMiddleName").value.trim(),
+      extraName:     document.getElementById("fExtraName").value.trim(),
+      barangay:      document.getElementById("fBarangay").value,
+      street:        document.getElementById("fStreet").value.trim(),
+      contact:       document.getElementById("fContact").value.trim(),
+      birthdate,
+      age:           Number(document.getElementById("fAge").value),
+      sex:           document.getElementById("fSex").value,
+      civilStatus:   document.getElementById("fCivilStatus").value,
+      familyMembers: Number(document.getElementById("fFamilyMembers").value),
+      occupation:    document.getElementById("fOccupation").value.trim(),
+      salary:        Number(document.getElementById("fSalary").value),
+      assistance:    document.getElementById("fAssistance").value,
+      addedBy:       currentUser.uid,
+      addedByName:   userName,
+      updatedBy:     currentUser.uid,
+      updatedByName: userName,
+      createdAt:     serverTimestamp(),
+      updatedAt:     serverTimestamp(),
+    });
+    showToast(`✅ Client added! ID: ${clientId}`, "success");
+    closeModal("clientModal");
+    await loadClients();
+    loadDashboard();
+  } catch(e) {
+    console.error(e);
+    showToast("Error: " + e.message, "error");
+  } finally {
+    btn.disabled = false; btn.textContent = "💾 Save Client";
+  }
+};
+
+// ---- VIEW CLIENT ----
+window.viewClient = (firestoreId) => {
+  const c = allClients.find(x => x.firestoreId === firestoreId);
+  if (!c) return;
+  const assistBadge = { Burial:"badge-red", Medical:"badge-blue", Educational:"badge-purple", Calamity:"badge-orange", Solicitation:"badge-cyan" };
+  const statusBadge = { "Claimed":"badge status-claimed", "Not Claimed":"badge status-not", "In Process":"badge status-inprocess", "Duplicate":"badge status-duplicate" };
+
+  const createdAt  = c.createdAt   ? (c.createdAt.toDate   ? c.createdAt.toDate()   : new Date(c.createdAt))   : null;
+  const claimedAt  = c.claimedDate ? (c.claimedDate.toDate ? c.claimedDate.toDate() : new Date(c.claimedDate)) : null;
+  const fmtDT = (dt) => dt ? dt.toLocaleDateString("en-PH",{year:"numeric",month:"long",day:"numeric"}) + " at " + dt.toLocaleTimeString("en-PH",{hour:"2-digit",minute:"2-digit"}) : "—";
+  const fmtD  = (dt) => dt ? dt.toLocaleDateString("en-PH",{year:"numeric",month:"long",day:"numeric"}) : "—";
+
+  const st = c.status || "Not Claimed";
+
+  document.getElementById("viewClientBody").innerHTML = `
+    <div style="text-align:center;margin-bottom:1.5rem">
+      <div style="font-size:3rem">👤</div>
+      <h2 style="font-family:'DM Sans',sans-serif;font-size:1.18rem;font-weight:700;line-height:1.2;margin:.3rem 0">${c.lastName}, ${c.firstName} ${c.middleName} ${c.extraName||""}</h2>
+      <span class="badge badge-green" style="font-size:.85rem">${c.clientId}</span>
+      ${c.assistance ? `&nbsp;<span class="badge ${assistBadge[c.assistance]||''}">${c.assistance}</span>` : ""}
+      &nbsp;<span class="${statusBadge[st]||'badge status-not'}">${st}</span>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.8rem 1.2rem;font-size:.88rem">
+      ${[
+        ["Barangay",c.barangay],["Street",c.street],["Contact No.",c.contact],
+        ["Birthdate",c.birthdate],["Age",c.age],["Sex",c.sex],
+        ["Civil Status",c.civilStatus],["Family Members",c.familyMembers],
+        ["Occupation",c.occupation],["Monthly Salary","₱"+Number(c.salary).toLocaleString()]
+      ].map(([k,v])=>`<div><div style="color:var(--muted);font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.2rem">${k}</div><div style="font-weight:500">${v||"—"}</div></div>`).join("")}
+    </div>
+
+    ${st === "Claimed" ? `
+    <div style="margin-top:1.2rem;padding:.9rem 1.1rem;background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:10px;display:flex;align-items:center;gap:.8rem">
+      <span style="font-size:1.4rem">✅</span>
+      <div>
+        <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--accent2);margin-bottom:.2rem">Date of Assistance Claimed</div>
+        <div style="font-size:.95rem;font-weight:700;color:var(--accent2)">📅 ${claimedAt ? fmtD(claimedAt) : "— Date not recorded"}</div>
+      </div>
+    </div>` : ""}
+
+    <div style="margin-top:1.4rem;padding-top:1.2rem;border-top:1px solid var(--border)">
+      <div style="font-size:.72rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:.8rem;font-weight:600">📋 Record Audit</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.7rem;font-size:.84rem">
+        <div><div style="color:var(--muted);font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.2rem">Added By</div><div style="color:var(--accent2);font-weight:600">👤 ${c.addedByName||"—"}</div></div>
+        <div><div style="color:var(--muted);font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.2rem">Date Added</div><div style="font-weight:500">📅 ${fmtDT(createdAt)}</div></div>
+      </div>
+    </div>`;
+  openModal("viewClientModal");
+};
+
+window.openModal  = openModal;
+window.closeModal = closeModal;
+</script>
+</body>
+</html>

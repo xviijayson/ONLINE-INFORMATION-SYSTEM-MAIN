@@ -1,0 +1,218 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Office Information System - Login</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css"/>
+  <style>
+    body { display:flex; align-items:center; justify-content:center; min-height:100vh; background:var(--bg); overflow:hidden; }
+    .login-wrap { position:relative; z-index:2; width:100%; max-width:440px; padding:0 1.5rem; }
+    .login-card {
+      position:relative;
+      overflow:hidden;
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:20px;
+      padding:2.8rem 2.5rem;
+      box-shadow:0 20px 60px rgba(20,67,42,.15);
+      animation:slideUp .5s ease;
+    }
+    .login-card::before {
+      content:"";
+      position:absolute;
+      inset:0;
+      background:
+        linear-gradient(rgba(255,255,255,.94), rgba(255,255,255,.94)),
+        url("logo.png") center/280px no-repeat;
+      opacity:.28;
+      pointer-events:none;
+    }
+    .login-card > * { position:relative; z-index:1; }
+    @keyframes slideUp { from { opacity:0; transform:translateY(28px); } to { opacity:1; transform:translateY(0); } }
+    .login-badge { display:flex; align-items:center; gap:.7rem; margin-bottom:2rem; }
+    .login-badge .icon { width:52px; height:52px; border-radius:50%; overflow:hidden; display:grid; place-items:center; background:#fff; box-shadow:0 2px 8px rgba(22,163,74,.2); }
+    .login-badge .sys-name { font-family:'DM Sans',sans-serif; font-weight:700; font-size:1rem; color:var(--text); line-height:1.15; }
+    .login-badge .sys-name span { display:block; font-size:.7rem; font-weight:400; color:var(--muted); font-family:'DM Sans',sans-serif; }
+    h2 { font-family:'DM Sans',sans-serif; font-size:1.45rem; font-weight:700; margin:0 0 .4rem; color:var(--text); line-height:1.15; }
+    .sub { color:var(--muted); font-size:.9rem; margin-bottom:2rem; }
+    .form-group { margin-bottom:1.2rem; }
+    label { display:block; font-size:.8rem; font-weight:600; color:var(--muted); margin-bottom:.45rem; text-transform:uppercase; letter-spacing:.06em; }
+    input[type=email], input[type=password] {
+      width:100%;
+      padding:.8rem 1rem;
+      border-radius:10px;
+      background:var(--input-bg);
+      border:1.5px solid var(--border);
+      color:var(--text);
+      font-family:'DM Sans',sans-serif;
+      font-size:.95rem;
+      outline:none;
+      transition:border .2s, box-shadow .2s;
+      box-sizing:border-box;
+    }
+    input::placeholder { color:var(--muted); opacity:.7; }
+    input:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(22,163,74,.12); }
+    .btn-login {
+      width:100%;
+      padding:.9rem;
+      border:none;
+      border-radius:10px;
+      background:linear-gradient(135deg,#16a34a,#15803d);
+      color:#fff;
+      font-family:'DM Sans',sans-serif;
+      font-size:1rem;
+      font-weight:700;
+      cursor:pointer;
+      margin-top:.6rem;
+      transition:opacity .2s, transform .1s;
+      box-shadow:0 4px 14px rgba(22,163,74,.35);
+    }
+    .btn-login:hover { opacity:.9; transform:translateY(-1px); }
+    .err-msg { background:#fee2e2; border:1px solid #fecaca; color:#dc2626; border-radius:8px; padding:.7rem 1rem; font-size:.88rem; margin-bottom:1rem; display:none; }
+    .orb { display:none; }
+    .orb1 { display:none; }
+    .orb2 { display:none; }
+    .startup-loader {
+      position:fixed;
+      inset:0;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      background:linear-gradient(135deg,#0d3321 0%,#1a6640 55%,#2d9e6b 100%);
+      z-index:9999;
+      transition:opacity .6s ease, visibility .6s ease;
+    }
+    .startup-loader.hidden { opacity:0; visibility:hidden; pointer-events:none; }
+    .startup-loader.gone { display:none; }
+    .splash-logo {
+      width:112px;
+      height:112px;
+      border-radius:50%;
+      object-fit:cover;
+      border:4px solid rgba(255,255,255,.25);
+      box-shadow:0 0 0 14px rgba(201,162,39,.15), 0 0 0 28px rgba(201,162,39,.06);
+      animation:splashPulse 2s ease-in-out infinite;
+      margin-bottom:24px;
+    }
+    @keyframes splashPulse {
+      0%,100% { box-shadow:0 0 0 14px rgba(201,162,39,.15), 0 0 0 28px rgba(201,162,39,.06); }
+      50% { box-shadow:0 0 0 20px rgba(201,162,39,.22), 0 0 0 40px rgba(201,162,39,.05); }
+    }
+    .splash-title { margin:0 0 .25rem; font-family:'DM Sans',sans-serif; font-size:1.65rem; font-weight:700; color:#fff; letter-spacing:0; line-height:1.15; text-align:center; }
+    .splash-name { color:#e8bb3e; font-size:.92rem; letter-spacing:.16em; text-transform:uppercase; text-align:center; margin-bottom:.4rem; }
+    .splash-sub { font-size:.72rem; color:rgba(255,255,255,.42); letter-spacing:.26em; text-transform:uppercase; margin-bottom:2rem; text-align:center; }
+    .splash-bar-wrap { width:220px; height:3px; background:rgba(255,255,255,.12); border-radius:999px; overflow:hidden; }
+    .splash-bar { height:100%; width:100%; background:#c9a227; border-radius:999px; transform-origin:left center; animation:loadBar .95s ease forwards; }
+    @keyframes loadBar { from { transform:scaleX(0); } to { transform:scaleX(1); } }
+    .splash-status { margin-top:.9rem; color:rgba(255,255,255,.58); font-size:.76rem; letter-spacing:.12em; text-transform:uppercase; }
+  </style>
+</head>
+<body>
+  <div class="startup-loader" id="startupLoader">
+    <img class="splash-logo" src="logo.png" alt="Logo" />
+    <h3 class="splash-title">Office Information System</h3>
+    <div class="splash-name">Congressman Gerald Galang</div>
+    <p class="splash-sub">Official Dashboard Startup</p>
+    <div class="splash-bar-wrap"><div class="splash-bar"></div></div>
+    <div class="splash-status">Loading modules...</div>
+  </div>
+  <div class="orb orb1"></div>
+  <div class="orb orb2"></div>
+  <div class="login-wrap">
+    <div class="login-card">
+      <div class="login-badge">
+        <div class="icon"><img src="logo.png" alt="Logo" style="width:48px;height:48px;object-fit:cover;border-radius:50%"/></div>
+        <div class="sys-name">OIS Portal<span>Congressman Gerald Galang</span></div>
+      </div>
+      <h2>Welcome back</h2>
+      <p class="sub">Sign in to access your dashboard.</p>
+      <div class="err-msg" id="errMsg"></div>
+      <div class="form-group">
+        <label>Email Address</label>
+        <input type="email" id="loginEmail" placeholder="you@office.gov.ph"/>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="loginPass" placeholder="Enter your password"/>
+      </div>
+      <button class="btn-login" onclick="doLogin()">Sign In</button>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import {
+      getAuth,
+      signInWithEmailAndPassword,
+      setPersistence,
+      browserSessionPersistence
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    // Keep config inline here so the page can boot even when opened directly
+    // without trying to import a local module over file://.
+    const firebaseConfig = {
+      apiKey: "AIzaSyCR7xXSuRnvdhR3QWT_9KZJPdMCenJHQo0",
+      authDomain: "ois-portal-55bc5.firebaseapp.com",
+      projectId: "ois-portal-55bc5",
+      storageBucket: "ois-portal-55bc5.firebasestorage.app",
+      messagingSenderId: "1021378935395",
+      appId: "1:1021378935395:web:ad32a7e78a10a92e609656"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    const startupLoader = document.getElementById("startupLoader");
+    const startupStartTime = performance.now();
+
+    const hideStartupLoader = () => {
+      if (!startupLoader) return;
+      startupLoader.classList.add("hidden");
+    };
+
+    const scheduleHideStartupLoader = () => {
+      const elapsed = performance.now() - startupStartTime;
+      const delay = Math.max(0, 1200 - elapsed);
+      setTimeout(hideStartupLoader, delay);
+    };
+
+    startupLoader?.addEventListener("transitionend", () => {
+      if (startupLoader.classList.contains("hidden")) {
+        startupLoader.classList.add("gone");
+      }
+    });
+
+    setPersistence(auth, browserSessionPersistence)
+      .catch(error => console.error("Auth persistence setup failed:", error))
+      .finally(scheduleHideStartupLoader);
+
+    window.doLogin = async () => {
+      const email = document.getElementById("loginEmail").value.trim();
+      const pass = document.getElementById("loginPass").value;
+      const err = document.getElementById("errMsg");
+      err.style.display = "none";
+      if (!email || !pass) {
+        err.textContent = "Please fill in all fields.";
+        err.style.display = "block";
+        return;
+      }
+      try {
+        await setPersistence(auth, browserSessionPersistence);
+        const cred = await signInWithEmailAndPassword(auth, email, pass);
+        const snap = await getDoc(doc(db, "users", cred.user.uid));
+        const role = snap.data()?.role;
+        window.location.href = role === "admin" ? "pages/admin-dashboard.html" : "pages/user-dashboard.html";
+      } catch (e) {
+        err.textContent = "Invalid email or password.";
+        err.style.display = "block";
+      }
+    };
+  </script>
+</body>
+</html>
